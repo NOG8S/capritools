@@ -15,5 +15,7 @@ app:
         - mysql
 mysql:
     image: mysql:latest
+    volumes:
+        - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
     environment:
         MYSQL_ALLOW_EMPTY_PASSWORD: 1
