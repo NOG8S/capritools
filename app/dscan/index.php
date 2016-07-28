@@ -4,19 +4,25 @@ include("functions.php");
 
 saveHit();
 
+$showFailureMessage = false;
+
 if(isset($_POST['dscan'])) {
 	$dscan = $_POST['dscan'];
 
 	$objects = parseDscan($dscan);
 	$key = saveDscan($objects);
-	
-	//Save to file
-    if (!file_exists("scans"))
-        mkdir("scans");
-	file_put_contents("scans/".$key, $dscan);
-	
-	header('Location: /dscan/'.$key);
-	//print_r($objects);
+
+    if ($key) {
+        //Save to file
+        if (!file_exists("scans"))
+            mkdir("scans");
+        file_put_contents("scans/".$key, $dscan);
+        
+        header('Location: /dscan/'.$key);
+        //print_r($objects);
+    } else {
+        $showFailureMessage = true;
+    }
 }
 ?>
 <head>
@@ -44,6 +50,10 @@ if(isset($_POST['dscan'])) {
 	<div class="container">
 		<div class="starter-template">
 			<h1>Directional Scan Paste Tool</h1>
+            <?php if ($showFailureMessage) { ?>
+                <p style="color: red">The provided dscan could not be parsed, please try again.</p>
+                <p>If you think this is an error, please provide the dscan as a text snippet in #it_office.</p>
+            <?php } ?>
 			<p class="lead">
 				<form method="POST">
 					<fieldset>
