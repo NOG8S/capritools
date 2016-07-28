@@ -61,11 +61,11 @@ CREATE TABLE IF NOT EXISTS `celestials` (
 
 CREATE TABLE IF NOT EXISTS `dscanObjects` (
   `scan` int(11) NOT NULL,
-  `name` varchar(64) NOT NULL,
+  `name` varchar(256) NOT NULL,
   `type` varchar(64) NOT NULL,
   `distance` bigint(20) NOT NULL,
   KEY `scan` (`scan`)
-) ENGINE=InnoDB DEFAULT CHARSET=ascii;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `dscanScans` (
   `ip` varchar(15) NOT NULL,
   `key` varchar(40) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=ascii AUTO_INCREMENT=1725 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ;
 
 -- --------------------------------------------------------
 
@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS `lscanScans` (
   `total` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `key` (`key`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2044 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ;
 
 -- --------------------------------------------------------
 
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `pastes` (
   `key` varchar(40) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `key` (`key`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=2838 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ;
 
 -- --------------------------------------------------------
 
@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `shoppingLists` (
   `pasteKey` varchar(40) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `key` (`key`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=557 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
