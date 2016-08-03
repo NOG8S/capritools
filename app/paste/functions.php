@@ -7,7 +7,7 @@ function savePaste($data) {
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
 	
 	//Create scan entry
-	$st = $db->prepare("INSERT INTO pastes(`created`, `ip`) VALUES (UNIX_TIMESTAMP(), :ip)");
+	$st = $db->prepare("INSERT INTO pastes(`created`, `ip`, `key`) VALUES (UNIX_TIMESTAMP(), :ip, '')");
 	$st->bindValue(":ip", $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
 	$st->execute();
 	
