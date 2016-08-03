@@ -13,6 +13,7 @@
 	$p['name'] = "Pastebin";
 	$p['href'] = "/paste/";
 	$pages[] = $p;
+    /*
 	
 	$p['name'] = "Shopping";
 	$p['href'] = "/shopping/";
@@ -21,6 +22,7 @@
 	$p['name'] = "Quickmath";
 	$p['href'] = "/quickmath/";
 	$pages[] = $p;
+     */
 	
 $active = "";
 foreach($pages as $p) {
