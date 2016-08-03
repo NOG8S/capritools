@@ -2,7 +2,7 @@
 $mysql_user = "root";
 $mysql_pass = "";
 $mysql_host = "mysql";
-$mysql_db = "intel";
+$mysql_db = "tools";
 
 $classcolour['Assault Frigate'] = "active";
 $classcolour['Attack Battlecruiser'] = "active";
