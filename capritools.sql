@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS `lscanScans` (
   `ip` varchar(15) NOT NULL,
   `key` varchar(40) NOT NULL,
   `pasteKey` varchar(40) NOT NULL,
+  `system` varchar(200) NOT NULL,
   `total` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `key` (`key`)

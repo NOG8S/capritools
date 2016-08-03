@@ -13,9 +13,12 @@ app:
         - ./app:/usr/src/app
     links:
         - mysql
+        - redis
 mysql:
     image: mysql:latest
     volumes:
         - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
     environment:
         MYSQL_ALLOW_EMPTY_PASSWORD: 1
+redis:
+    image: redis:latest

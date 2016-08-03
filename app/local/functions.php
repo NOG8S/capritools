@@ -6,6 +6,8 @@ include("simple_html_dom.php");
 //Connect MySQL
 $db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
 $odb = new PDO('mysql:host='.$mysql_host.';dbname=sde;charset=utf8', $mysql_user, $mysql_pass);
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$odb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 
 function saveHit() {
@@ -62,7 +64,7 @@ function savePaste($data) {
 	global $db;
 	
 	//Create scan entry
-	$st = $db->prepare("INSERT INTO pastes(`created`, `ip`) VALUES (UNIX_TIMESTAMP(), :ip)");
+	$st = $db->prepare("INSERT INTO pastes(`created`, `ip`, `key`) VALUES (UNIX_TIMESTAMP(), :ip, '')");
 	$st->bindValue(":ip", $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
 	$st->execute();
 	
@@ -77,6 +79,7 @@ function savePaste($data) {
 	//Save data segments
 	$data = str_split($data, 1024);
 	for($i = 0; $i < count($data); $i++) {
+        if (!strlen($data[$i])) continue;
 		$st = $db->prepare("INSERT INTO pasteData(`id`, `sequence`, `data`) VALUES (:id, :sequence, :data)");
 		$st->bindValue(":id", $id);
 		$st->bindValue(":sequence", $i);
@@ -148,7 +151,7 @@ function saveLScan($lscan, $system = "") {
 	}
 	
 	//Create scan entry
-	$st = $db->prepare("INSERT INTO lscanScans(`created`, `ip`, `system`, `pasteKey`, `total`) VALUES (UNIX_TIMESTAMP(), :ip, :system, :pasteKey, :total)");
+	$st = $db->prepare("INSERT INTO lscanScans(`created`, `ip`, `system`, `key`, `pasteKey`, `total`) VALUES (UNIX_TIMESTAMP(), :ip, :system, '', :pasteKey, :total)");
 	$st->bindValue(":ip", $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
 	$st->bindValue(":system", $system, PDO::PARAM_STR);
 	$st->bindValue(":pasteKey", $pasteKey, PDO::PARAM_STR);
@@ -474,7 +477,7 @@ function buildFromList($chars) {
 function buildFromListNew($charlist) {
 	//Connect to Redis and get as many characters as possible
 	$redis = new Redis;
-	$redis->connect("127.0.0.1");
+	$redis->connect("redis");
 	$unknowns = array();
 	$chars = array();
 	foreach($charlist as $char) {

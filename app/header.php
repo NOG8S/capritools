@@ -3,26 +3,24 @@
 	$pages = array();
 	
 	$p['name'] = "Dscan";
-	$p['href'] = "/";
+	$p['href'] = "/dscan/";
 	$pages[] = $p;
-    /*
 	
 	$p['name'] = "Localscan";
-	$p['href'] = "/local";
+	$p['href'] = "/local/";
 	$pages[] = $p;
 	
 	$p['name'] = "Pastebin";
-	$p['href'] = "/paste";
+	$p['href'] = "/paste/";
 	$pages[] = $p;
 	
 	$p['name'] = "Shopping";
-	$p['href'] = "/shopping";
+	$p['href'] = "/shopping/";
 	$pages[] = $p;
 	
 	$p['name'] = "Quickmath";
-	$p['href'] = "/quickmath";
+	$p['href'] = "/quickmath/";
 	$pages[] = $p;
-     */
 	
 $active = "";
 foreach($pages as $p) {
