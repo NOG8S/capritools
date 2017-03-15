@@ -7,15 +7,15 @@ function distanceToMeters($dist, $unit) {
 		case "m":
 			return $dist;
 			break;
-
+			
 		case "km":
 			return 1000 * $dist;
 			break;
-
+			
 		case "AU":
 			return 149597870700 * floatval($dist);
 			break;
-
+			
 		default:
 			return null;
 			break;
@@ -27,31 +27,31 @@ function distanceToMeters($dist, $unit) {
 //Parses a dscan to an array
 function parseDscan($dscan) {
 	$objects = array();
-
+	
 	//Split into rows
 	$rows = explode("\n", $dscan);
-
+	
 	//Iterate through our rows
 	foreach($rows as $row) {
 		//Check if it matches a dscan row format
-		if(preg_match("/^([^\t]+)\t([^\t]+)\t([^\t]+)\t(([0-9,.]+) (km|m|AU)|-)/", $row, $matches) == 1) {
-			$ob['type'] = $matches[3];
-			$ob['name'] = $matches[2];
-
+		if(preg_match("/^([^\t]+)\t([^\t]+)\t(([0-9,.]+) (km|m|AU)|-)/", $row, $matches) == 1) {
+			$ob['type'] = $matches[2];
+			$ob['name'] = $matches[1];
+			
 			//Parse distance
-			if(count($matches) == 5) {
+			if(count($matches) == 4) {
 				//Unknown distance
 				$ob['distance'] = -1;
 			} else {
 				//Known distance
-				$ob['distance'] = distanceToMeters($matches[5], $matches[6]);
+				$ob['distance'] = distanceToMeters($matches[4], $matches[5]);
 			}
-
+			
 			//Add to list
 			$objects[] = $ob;
 		}
 	}
-
+	
 	return $objects;
 }
 
@@ -61,7 +61,7 @@ function saveHit() {
 	//Connect MySQL
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
-
+	
 	//Create scan entry
 	$st = $db->prepare("INSERT INTO pageHits (`date`, `ip`, `referrer`, `page`) VALUES (UNIX_TIMESTAMP(), :ip, :referrer, :page)");
 	$st->bindValue(":ip", $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
@@ -77,17 +77,17 @@ function saveDscan($dscan) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check there are actually objects to save
 	if(count($dscan) < 1) {
 		return;
 	}
-
+	
 	//Create scan entry
 	$st = $db->prepare("INSERT INTO dscanScans(`created`, `ip`) VALUES (UNIX_TIMESTAMP(), :ip)");
 	$st->bindValue(":ip", $_SERVER['REMOTE_ADDR'], PDO::PARAM_STR);
 	$st->execute();
-
+	
 	//Get id and create key
 	$id = $db->lastInsertId();
 	$key = sha1("cloakypilgrim" . $id);
@@ -95,7 +95,7 @@ function saveDscan($dscan) {
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
 	$st->bindValue(":id", $id, PDO::PARAM_INT);
 	$st->execute();
-
+	
 	//Build SQL for object dump
 	$sql = "INSERT INTO dscanObjects(`scan`, `name`, `type`, `distance`) VALUES ";
 	for($i = 0; $i < count($dscan); $i++) {
@@ -103,7 +103,7 @@ function saveDscan($dscan) {
 	}
 	$sql = rtrim($sql, ",");
 	$st = $db->prepare($sql);
-
+	
 	//Bind values
 	for($i = 0; $i < count($dscan); $i++) {
 		$st->bindValue(":".$i."scan", $id, PDO::PARAM_INT);
@@ -111,10 +111,10 @@ function saveDscan($dscan) {
 		$st->bindValue(":".$i."type", $dscan[$i]['type'], PDO::PARAM_STR);
 		$st->bindValue(":".$i."distance", $dscan[$i]['distance'], PDO::PARAM_INT);
 	}
-
+	
 	//Execute the dump
 	$st->execute($values);
-
+	
 	return $key;
 }
 
@@ -131,7 +131,7 @@ function parseDscanTower($dscan) {
 		$m['typeName'] = $mod[2];
 		$mods[$m['typeName']] = $m;
 	}
-
+	
 	//Parse control towers file
 	$csv = explode("\n", file_get_contents("controltowers.csv"));
 	foreach($csv as $ct) {
@@ -141,14 +141,14 @@ function parseDscanTower($dscan) {
 		$m['typeName'] = $ct[2];
 		$cts[$m['typeName']] = $m;
 	}
-
+	
 	//Parse the dscan
 	$pos = array();
 	$ct = null;
 	$rows = explode("\n", $dscan);
 	foreach($rows as $row) {
 		$cols = explode("\t", $row);
-
+		
 		//Check if it's on grid
 		if(preg_match("/([0-9,]+) (km|m|AU)/", $cols[2], $matches) == 1) {
 			//Check if this module exists in our pos mod db
@@ -162,18 +162,18 @@ function parseDscanTower($dscan) {
 					if($ct != null) {
 						die("Error, more than 1 control tower on scan");
 					}
-
+					
 					$ct = $cts[$cols[1]];
 				}
 			}
 		}
 	}
-
+	
 	//Check if empty
 	if($ct === null) {
 		return null;
 	}
-
+	
 	//Generate URL
 	$url = "http://eve.1019.net/pos/index.php?ct=%%CT%%&mod=%%MODS%%&off=";
 	$modlist = "";
@@ -192,7 +192,7 @@ function getDscan($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -213,7 +213,7 @@ function getDscanList() {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans");
 	$st->execute();
@@ -233,7 +233,7 @@ function getDscanLocation($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -244,14 +244,14 @@ function getDscanLocation($key) {
 		return null;
 	}
 	$id = $rows[0]['id'];
-
+	
 	//Try for celestials
 	//$st = $db->prepare("SELECT * FROM dscanObjects WHERE scan=:scan AND type='Moon' ORDER BY distance ASC");
 	$st = $db->prepare("SELECT * FROM dscanObjects WHERE scan=:scan ORDER BY distance ASC");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	if(count($rows > 0)) {
 		//Iterate through objects
 		for($i = 0; $i < count($rows); $i++) {
@@ -264,13 +264,13 @@ function getDscanLocation($key) {
 			}
 		}
 	}
-
+	
 	//Try to work it out using single gates
 	$st = $db->prepare("SELECT * FROM dscanObjects WHERE scan=:scan AND type LIKE 'Stargate %' ORDER BY distance ASC");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	foreach($rows as $row) {
 		$st = $db->prepare("SELECT * FROM gates WHERE itemName=:name AND typeName=:type");
 		$st->bindValue(":name", $row['name'], PDO::PARAM_STR);
@@ -290,7 +290,7 @@ function getDscanShips($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass, array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET sql_mode=""'));
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -300,14 +300,14 @@ function getDscanShips($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT type, count(*) as quantity, groupName FROM dscanObjects INNER JOIN sde.invTypes as ships ON ships.typeName=dscanObjects.type INNER JOIN sde.invGroups AS groups ON groups.groupID = ships.groupID WHERE scan=:scan AND groups.categoryID = 6 GROUP BY type ORDER BY quantity DESC");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows;
 }
 
@@ -318,7 +318,7 @@ function getDscanShipsMass($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -328,14 +328,14 @@ function getDscanShipsMass($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT sum(mass) as totalMass FROM dscanObjects INNER JOIN sde.invTypes as ships ON ships.typeName=dscanObjects.type INNER JOIN sde.invGroups AS groups ON groups.groupID = ships.groupID WHERE scan=:scan AND ships.groupID NOT IN(30, 659) AND groups.categoryID = 6;");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows[0]['totalMass'];
 }
 
@@ -346,7 +346,7 @@ function getDscanShipsVolume($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -356,14 +356,14 @@ function getDscanShipsVolume($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT sum(volume) as totalVolume FROM dscanObjects INNER JOIN sde.invTypes as ships ON ships.typeName=dscanObjects.type INNER JOIN sde.invGroups AS groups ON groups.groupID = ships.groupID WHERE scan=:scan AND ships.groupID NOT IN(30, 659) AND groups.categoryID = 6;");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows[0]['totalVolume'];
 }
 
@@ -374,7 +374,7 @@ function getDscanShipTypesSubs($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -384,7 +384,7 @@ function getDscanShipTypesSubs($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT groups.groupName as type, count(*) as quantity, groupName FROM dscanObjects INNER JOIN sde.invTypes as ships ON ships.typeName=dscanObjects.type INNER JOIN sde.invGroups as groups ON groups.groupID = ships.groupID
@@ -392,7 +392,7 @@ function getDscanShipTypesSubs($key) {
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows;
 }
 
@@ -403,7 +403,7 @@ function getDscanShipTypesCaps($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -413,7 +413,7 @@ function getDscanShipTypesCaps($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT groups.groupName as type, count(*) as quantity, groupName FROM dscanObjects INNER JOIN sde.invTypes as ships ON ships.typeName=dscanObjects.type INNER JOIN sde.invGroups as groups ON groups.groupID = ships.groupID
@@ -421,7 +421,7 @@ function getDscanShipTypesCaps($key) {
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows;
 }
 
@@ -432,7 +432,7 @@ function getDscanObjects($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -442,14 +442,14 @@ function getDscanObjects($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT type, count(*) as quantity FROM dscanObjects WHERE scan=:scan GROUP BY type ORDER BY quantity DESC");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	return $rows;
 }
 
@@ -469,7 +469,7 @@ function getDscanTower($key) {
 	//Connect MySQL
 	/*include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -479,14 +479,14 @@ function getDscanTower($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get objects for scan
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT type, distance FROM dscanObjects WHERE scan=:scan AND distance >= 0");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
-
+	
 	//Search objects for tower
 	$found = false;
 	foreach($rows as $row) {
@@ -495,7 +495,7 @@ function getDscanTower($key) {
 			$found = true;
 		}
 	}*/
-
+	
 	if(true) {
 		$dscan = file_get_contents("scans/".$key);
 		//echo $dscan;
@@ -521,24 +521,24 @@ function dscanListObjects($objects) {
 	include("config.php");
 	$html = "<table class=\"table table-striped table-hover \">
 	<tbody>";
-
+	
 	foreach($objects as $ob) {
 		//Link
 		/*$url = "https://wiki.eveonline.com/en/wiki/".str_replace(" ", "_", $ob['type']);
 		$html .= "\n<li class=\"list-group-item\"><span class=\"badge\">".$ob['quantity']."
 		</span><a href=\"".$url."\">".$ob['type']."</a></li>";*/
-
+		
 		//No link
 		/*$html .= "\n<li class=\"list-group-item\"><span class=\"badge\">".$ob['quantity']."
 		</span><strong>".$ob['type']."</strong></li>";*/
-
+		
 		//Table
 		$html .= "\n<tr style=\"padding: 3px;\"><td class=\"".$classcolour[$ob['groupName']]."\" style=\"width: 10%; padding: 6px;\" align=\"center\"><strong>".$ob['quantity']."</strong></td><td style=\"padding: 6px;\">
 		</span><strong>".$ob['type']."</strong></td></tr>";
 	}
-
+	
 	$html .= "</tbody></table>";
-
+	
 	return $html;
 }
 
@@ -548,7 +548,7 @@ function towerChecker($key) {
 	include("config.php");
 	$db = new PDO('mysql:host='.$mysql_host.';dbname='.$mysql_db.';charset=utf8', $mysql_user, $mysql_pass);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	
 	//Check if scan exists
 	$st = $db->prepare("SELECT * FROM dscanScans WHERE `key`=:key LIMIT 1");
 	$st->bindValue(":key", $key, PDO::PARAM_STR);
@@ -558,7 +558,7 @@ function towerChecker($key) {
 		//No scan found
 		return null;
 	}
-
+	
 	//Get towers
 	$id = $rows[0]['id'];
 	$st = $db->prepare("SELECT count(*) as towers FROM dscanObjects INNER JOIN sde.invTypes on sde.invTypes.typeName=dscanObjects.type WHERE `scan`=:scan AND groupID = 365");
@@ -566,17 +566,17 @@ function towerChecker($key) {
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
 	$towers = $rows[0]['towers'];
-
+	
 	//Get forcefields
 	$st = $db->prepare("SELECT count(*) as forcefields FROM dscanObjects WHERE `scan`=:scan AND type = 'Force Field'");
 	$st->bindValue(":scan", $id, PDO::PARAM_STR);
 	$st->execute();
 	$rows = $st->fetchAll(PDO::FETCH_ASSOC);
 	$forcefields = $rows[0]['forcefields'];
-
+	
 	$res['towers'] = $towers;
 	$res['forcefields'] = $forcefields;
-
+	
 	return $res;
 }
 
