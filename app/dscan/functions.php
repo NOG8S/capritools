@@ -34,17 +34,17 @@ function parseDscan($dscan) {
 	//Iterate through our rows
 	foreach($rows as $row) {
 		//Check if it matches a dscan row format
-		if(preg_match("/^([^\t]+)\t([^\t]+)\t(([0-9,.]+) (km|m|AU)|-)/", $row, $matches) == 1) {
-			$ob['type'] = $matches[2];
-			$ob['name'] = $matches[1];
+		if(preg_match("/^([^\t]+)\t([^\t]+)\t([^\t]+)\t(([0-9,.]+) (km|m|AU)|-)/", $row, $matches) == 1) {
+			$ob['type'] = $matches[3];
+			$ob['name'] = $matches[2];
 			
 			//Parse distance
-			if(count($matches) == 4) {
+			if(count($matches) == 5) {
 				//Unknown distance
 				$ob['distance'] = -1;
 			} else {
 				//Known distance
-				$ob['distance'] = distanceToMeters($matches[4], $matches[5]);
+				$ob['distance'] = distanceToMeters($matches[5], $matches[6]);
 			}
 			
 			//Add to list
