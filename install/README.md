@@ -6,6 +6,6 @@
 4. download latest eve mysql sdk dump from [fuzzwork](https://www.fuzzwork.co.uk/dump/latest) - `install/sde_download.sh` (requires [wget](https://linux.die.net/man/1/wget) and [pbzip2](https://linux.die.net/man/1/pbzip2))
 5. apply sdk - `docker-compose exec mysql /tmp/capritools/install/sde_use.sh`
 
-## upgrade sde
+## upgrade sdk
 
 repeat points `4` and `5`
