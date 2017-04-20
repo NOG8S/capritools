@@ -40,7 +40,7 @@ foreach($pages as $p) {
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">NOG8S Tools (courtesy of Capri's Tools)</a>
+          <a class="navbar-brand" href="/"><?php echo getenv('CAPRITOOLS_TITLE') ? getenv('CAPRITOOLS_TITLE') : 'NOG8S Tools (courtesy of Capri\'s Tools)'; ?></a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
