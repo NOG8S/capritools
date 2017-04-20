@@ -20,6 +20,7 @@ mysql:
     image: mysql:latest
     volumes:
         - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+        - ./mysql:/var/lib/mysql
     environment:
         MYSQL_ALLOW_EMPTY_PASSWORD: 1
     restart: always
