@@ -21,6 +21,7 @@ mysql:
     volumes:
         - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
         - ./mysql:/var/lib/mysql
+        - ./:/tmp/capritools
     environment:
         MYSQL_ALLOW_EMPTY_PASSWORD: 1
     restart: always
